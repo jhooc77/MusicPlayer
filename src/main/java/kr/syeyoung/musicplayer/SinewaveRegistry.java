@@ -11,10 +11,17 @@ public class SinewaveRegistry {
     public static TreeMap<Double, String> FREQUENCY_SOUND = new TreeMap<>();
     public static Map<String, Double> SOUND_FREQUENCY = new HashMap<>();
     static {
+        register(0.0, "minecraft:sinewaves.0");
+        register(10.0, "minecraft:sinewaves.10");
+        register(20.0, "minecraft:sinewaves.20");
         register(40.0, "minecraft:sinewaves.40");
+        register(80.0, "minecraft:sinewaves.80");
         register(160.0, "minecraft:sinewaves.160");
+        register(320.0, "minecraft:sinewaves.320");
         register(640.0, "minecraft:sinewaves.640");
+        register(1280.0, "minecraft:sinewaves.1280");
         register(2560.0, "minecraft:sinewaves.2560");
+        register(5120.0, "minecraft:sinewaves.5120");
         register(10240.0, "minecraft:sinewaves.10240");
     }
 

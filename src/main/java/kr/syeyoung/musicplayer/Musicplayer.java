@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.annotation.command.Commands;
+import org.bukkit.plugin.java.annotation.plugin.ApiVersion;
 import org.bukkit.plugin.java.annotation.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -22,6 +23,7 @@ import java.util.UUID;
 @Commands({
         @org.bukkit.plugin.java.annotation.command.Command(name = "mpplay")
 })
+@ApiVersion(ApiVersion.Target.v1_13)
 public final class Musicplayer extends JavaPlugin {
 
     List<Thread> stopWhen = new ArrayList<>();

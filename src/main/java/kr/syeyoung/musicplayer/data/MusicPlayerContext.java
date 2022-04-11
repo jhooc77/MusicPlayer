@@ -29,12 +29,13 @@ public class MusicPlayerContext implements Runnable {
     @Override
     public void run() { // Probably shouldn't play song here but idk
         player.sendMessage("Playing... "+file.getAbsolutePath());
+        double minF = 0.5;
+        double maxF = 2;
+        final long startTime = System.currentTimeMillis();
         while(true) {
-            long time = System.currentTimeMillis();
             if (!provider.prepareFrame()) {
                 break;
             }
-
 
             double volume = volumeSettings.getVolume();
             Location loc = volumeSettings.getLocation();
@@ -67,17 +68,27 @@ public class MusicPlayerContext implements Runnable {
 //                }
 //                lastBin = bin;
 //            }
+            player.stopAllSounds();
             for (FrequencyBin bin : frame.bins) {
                 if (bin.amplitude > 0.05) {
                     String s = SinewaveRegistry.getBestSound(bin.frequency);
                     double freq = SinewaveRegistry.getFrequency(s);
-                    player.playSound(loc, s, SoundCategory.BLOCKS, (float) (volume * bin.amplitude), (float) (bin.frequency / freq));
+                    double fl = (bin.frequency / freq);
+                    player.playSound(loc, s, SoundCategory.BLOCKS, (float) (volume * bin.amplitude), (float) fl);
                     cnt++;
+                    if (fl < minF) {
+                        minF = fl;
+                    } else if (fl > maxF) {
+                        maxF = fl;
+                    }
                 }
             }
-            long targetMS = (long)(frame.frameEndMs - frame.frameStartMs) + time;
+            long sleepTime = (long) (startTime + frame.frameEndMs - System.currentTimeMillis());
+
+            player.sendTitle("count:" + cnt, "min:" + String.format("%.3f", minF) + " max:" + String.format("%.3f", maxF) + " time:" + sleepTime, 0, 40, 10);
+
             try {
-                Thread.sleep(targetMS - System.currentTimeMillis() - 5);
+                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

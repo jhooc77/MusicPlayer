@@ -48,9 +48,6 @@ public class MusicPlayerContext implements Runnable {
             FFTFrame frame = provider.getFrame();
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(frame.frameStartMs+"/"+frame.frameEndMs));
 
-            for (String sound : SinewaveRegistry.SOUND_FREQUENCY.keySet()) {
-                player.stopSound(sound);
-            }
             int cnt = 0;
             FrequencyBin lastBin = frame.bins[0];
             boolean increasing = false;
@@ -68,7 +65,6 @@ public class MusicPlayerContext implements Runnable {
 //                }
 //                lastBin = bin;
 //            }
-            player.stopAllSounds();
             for (FrequencyBin bin : frame.bins) {
                 if (bin.amplitude > 0.05) {
                     String s = SinewaveRegistry.getBestSound(bin.frequency);

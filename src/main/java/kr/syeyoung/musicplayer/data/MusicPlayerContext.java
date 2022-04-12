@@ -29,7 +29,7 @@ public class MusicPlayerContext implements Runnable {
     @Override
     public void run() { // Probably shouldn't play song here but idk
         player.sendMessage("Playing... "+file.getAbsolutePath());
-        double minF = 0.5;
+        double minF = 0.1;
         double maxF = 2;
         final long startTime = System.currentTimeMillis();
         while(true) {
@@ -46,7 +46,7 @@ public class MusicPlayerContext implements Runnable {
             }
 
             FFTFrame frame = provider.getFrame();
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(frame.frameStartMs+"/"+frame.frameEndMs));
+
 
             int cnt = 0;
             FrequencyBin lastBin = frame.bins[0];
@@ -66,11 +66,12 @@ public class MusicPlayerContext implements Runnable {
 //                lastBin = bin;
 //            }
             for (FrequencyBin bin : frame.bins) {
-                if (bin.amplitude > 0.05) {
+                if (bin.amplitude > 0.01) {
                     String s = SinewaveRegistry.getBestSound(bin.frequency);
                     double freq = SinewaveRegistry.getFrequency(s);
                     double fl = (bin.frequency / freq);
                     player.playSound(loc, s, SoundCategory.BLOCKS, (float) (volume * bin.amplitude), (float) fl);
+                    player.sendMessage(s);
                     cnt++;
                     if (fl < minF) {
                         minF = fl;

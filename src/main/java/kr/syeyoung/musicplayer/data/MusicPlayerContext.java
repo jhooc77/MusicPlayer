@@ -66,12 +66,12 @@ public class MusicPlayerContext implements Runnable {
 //                lastBin = bin;
 //            }
             for (FrequencyBin bin : frame.bins) {
-                if (bin.amplitude > 0.01) {
+                if (bin.amplitude > 0.02) {
                     String s = SinewaveRegistry.getBestSound(bin.frequency);
                     double freq = SinewaveRegistry.getFrequency(s);
                     double fl = (bin.frequency / freq);
                     player.playSound(loc, s, SoundCategory.BLOCKS, (float) (volume * bin.amplitude), (float) fl);
-                    player.sendMessage(s);
+                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(s));
                     cnt++;
                     if (fl < minF) {
                         minF = fl;

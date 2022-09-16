@@ -20,10 +20,11 @@ public class MusicPlayerContext implements Runnable {
     private Player player;
     private File file;
     private VolumeSettings volumeSettings;
-
     private FFTProvider provider;
-
     private SoundController controller;
+    private int range = -1;
+    private boolean debug = false;
+    private SinewaveRegistry sinewaveRegistry;
 
     @Override
     public void run() { // Probably shouldn't play song here but idk
@@ -46,7 +47,7 @@ public class MusicPlayerContext implements Runnable {
             }
 
             FFTFrame frame = provider.getFrame();
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(frame.frameStartMs+"/"+frame.frameEndMs));
+            if (debug) player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(frame.frameStartMs+"/"+frame.frameEndMs));
 
             int cnt = 0;
             FrequencyBin lastBin = frame.bins[0];
@@ -66,14 +67,20 @@ public class MusicPlayerContext implements Runnable {
 //                lastBin = bin;
 //            }
             if (provider.isDoStopSound()) {
-                player.stopAllSounds();
+                for (String sound : sinewaveRegistry.SOUND_FREQUENCY.keySet()) {
+                    player.stopSound(sound);
+                }
             }
             for (FrequencyBin bin : frame.bins) {
                 if (bin.amplitude > value) {
-                    String s = SinewaveRegistry.getBestSound(bin.frequency);
-                    double freq = SinewaveRegistry.getFrequency(s);
+                    String s = sinewaveRegistry.getBestSound(bin.frequency);
+                    double freq = sinewaveRegistry.getFrequency(s);
                     double fl = (bin.frequency / freq);
-                    controller.writeSound(s, (float) (volume * bin.amplitude), (float) fl);
+                    if (range != -1) {
+                        controller.writeSoundNearby(s, (float) (volume * bin.amplitude), (float) fl, range);
+                    } else {
+                        controller.writeSound(s, (float) (volume * bin.amplitude), (float) fl);
+                    }
                     cnt++;
                     if (fl < minF) {
                         minF = fl;
@@ -85,7 +92,7 @@ public class MusicPlayerContext implements Runnable {
             controller.flushSound();
             long sleepTime = (long) (startTime + frame.frameEndMs - System.currentTimeMillis());
 
-            player.sendTitle("count:" + cnt, "min:" + String.format("%.3f", minF) + " max:" + String.format("%.3f", maxF) + " time:" + sleepTime, 0, 40, 10);
+            if (debug) player.sendTitle("count:" + cnt, "min:" + String.format("%.3f", minF) + " max:" + String.format("%.3f", maxF) + " time:" + sleepTime, 0, 40, 10);
 
             try {
                 Thread.sleep(sleepTime < 0 ? 0 : sleepTime);

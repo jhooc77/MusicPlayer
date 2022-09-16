@@ -12,6 +12,7 @@
         <module>SoundController/SoundController_1_18_R2</module>
         <module>MusicPlayerAPI</module>
         <module>MusicPlayerPlugin</module>
+        <module>SoundController/SoundController_1_12_R1</module>
     </modules>
     <packaging>pom</packaging>
 

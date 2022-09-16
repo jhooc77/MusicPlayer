@@ -14,15 +14,12 @@ import org.bukkit.plugin.java.annotation.plugin.ApiVersion;
 import org.bukkit.plugin.java.annotation.plugin.Plugin;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-@Plugin(name="MusicPlayer", version = "")
+@Plugin(name="MusicPlayer", version = "1.0-SNAPSHOT")
 @Commands({
-        @org.bukkit.plugin.java.annotation.command.Command(name = "mpplay")
+        @org.bukkit.plugin.java.annotation.command.Command(name = "mpplay", permission = "musicplayer.play")
 })
 @ApiVersion(ApiVersion.Target.v1_13)
 public final class Musicplayer extends JavaPlugin {
@@ -44,50 +41,72 @@ public final class Musicplayer extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0 ){
-            sender.sendMessage("/mpplay play (wav파일) [windowsSize] [overlapPercent] [stopSoundBetweenEachNote] [useBukkitSoundController] - 바로 재생");
+            sender.sendMessage("/mpplay play (wav파일) [windowsSize] [overlapPercent] [stopSoundBetweenEachNote] [useBukkitSoundController] [debug] [resourceName] [range] - 바로 재생");
             sender.sendMessage("/mpplay stop - 노래 끄기");
             sender.sendMessage("/mpplay reload - 리로드");
         } else  {
             if (args[0].equals("play")) {
-                try {
-                    File f = new File(getDataFolder(), args[1]);
-                    int size = 4096;
-                    double percent = 0.5;
-                    boolean divide = false;
-                    SoundController controller;
-                    if (args.length > 2) {
-                        size = Integer.parseInt(args[2]);
-                    }
-                    if (args.length > 3) {
-                        percent = Double.parseDouble(args[3]);
-                    }
-                    if (args.length > 4) {
-                        divide = Boolean.parseBoolean(args[4]);
-                    }
-                    if (args.length > 5) {
-                        if (Boolean.parseBoolean(args[5])) {
-                            controller = SoundControllerProvider.bukkitController((Player) sender);
+                getServer().getScheduler().runTaskAsynchronously(this, () -> {
+                    try {
+                        File f = new File(getDataFolder(), args[1]);
+                        int range = -1;
+                        int size = 4096;
+                        double percent = 0.5;
+                        boolean divide = false;
+                        boolean debug = false;
+                        String resourceName = "sinewaves_short_test";
+                        SoundController controller;
+                        if (args.length > 2) {
+                            size = Integer.parseInt(args[2]);
+                        }
+                        if (args.length > 3) {
+                            percent = Double.parseDouble(args[3]);
+                        }
+                        if (args.length > 4) {
+                            divide = Boolean.parseBoolean(args[4]);
+                        }
+                        if (args.length > 5) {
+                            if (Boolean.parseBoolean(args[5])) {
+                                controller = SoundControllerProvider.bukkitController((Player) sender);
+                            } else {
+                                controller = SoundControllerProvider.nettyController((Player) sender);
+                            }
                         } else {
                             controller = SoundControllerProvider.nettyController((Player) sender);
                         }
-                    } else {
-                        controller = SoundControllerProvider.nettyController((Player) sender);
+                        if (args.length > 6) {
+                            debug = Boolean.parseBoolean(args[6]);
+                        }
+                        if (args.length > 7) {
+                            resourceName = args[7];
+                        }
+                        if (args.length > 8) {
+                            range = Integer.parseInt(args[8]);
+                        }
+                        MusicPlayerContext context = new MusicPlayerContext();
+                        context.setMusicId(UUID.randomUUID());
+                        context.setPlayer((Player) sender);
+                        context.setVolumeSettings(new StaticVolumeSetting(1.0));
+                        context.setProvider(new WavFileFFTFrameProvider(f, size, percent, divide));
+                        context.setFile(f);
+                        context.setController(controller);
+                        context.setRange(range);
+                        context.setDebug(debug);
+                        List<Integer> integerList = getConfig().getIntegerList("sinewave-list");
+                        if (integerList.size() == 0) {
+                            context.setSinewaveRegistry(new SinewaveRegistry(resourceName));
+                        } else {
+                            context.setSinewaveRegistry(new SinewaveRegistry(resourceName, integerList));
+                        }
+                        Thread t = new Thread(context);
+                        t.start();
+                        stopWhen.add(t);
+                        sender.sendMessage("Playing...");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        sender.sendMessage("Failed:" + e.getMessage());
                     }
-                    MusicPlayerContext context = new MusicPlayerContext();
-                    context.setMusicId(UUID.randomUUID());
-                    context.setPlayer((Player) sender);
-                    context.setVolumeSettings(new StaticVolumeSetting(1.0));
-                    context.setProvider(new WavFileFFTFrameProvider(f, size, percent, divide));
-                    context.setFile(f);
-                    context.setController(controller);
-                    Thread t = new Thread(context);
-                    t.start();
-                    stopWhen.add(t);
-                    sender.sendMessage("Playing...");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    sender.sendMessage("Failed:" + e.getMessage());
-                }
+                });
             } else if (args[0].equals("stop")) {
                 stopWhen.forEach(Thread::stop);
                 sender.sendMessage("Stopped");
@@ -115,6 +134,19 @@ public final class Musicplayer extends JavaPlugin {
                 return Arrays.asList("false", "true");
             } else if (args.length == 6) {
                 return Arrays.asList("false", "true");
+            } else if (args.length == 7) {
+                return Arrays.asList("false", "true");
+            } else if (args.length == 8) {
+                return Arrays.asList("sinewaves",
+                        "sinewaves_short",
+                        "sinewaves_short_0.1",
+                        "sinewaves_short_test",
+                        "sinewaves_shade_50",
+                        "sinewaves_shade_50_loud",
+                        "sinewaves_shade_100",
+                        "sinewaves_shade_100_loud");
+            } else if (args.length == 9) {
+                return Collections.singletonList("16");
             }
         }
         return super.onTabComplete(sender, command, alias, args);

@@ -11,6 +11,8 @@ public abstract class SoundController {
 
     public abstract void writeSound(String sound, float volume, float pitch);
 
+    public abstract void writeSoundNearby(String sound, float volume, float pitch, int range);
+
     public abstract void flushSound();
 
 }

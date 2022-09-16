@@ -1,30 +1,25 @@
 package kr.syeyoung.musicplayer.sound;
 
 import io.netty.channel.Channel;
-import net.minecraft.network.protocol.game.PacketPlayOutCustomSoundEffect;
-import net.minecraft.resources.MinecraftKey;
-import net.minecraft.server.level.EntityPlayer;
-import net.minecraft.server.players.PlayerList;
-import net.minecraft.sounds.SoundCategory;
-import net.minecraft.world.phys.Vec3D;
+import net.minecraft.server.v1_12_R1.*;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_17_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class SoundController1_17_R1 extends SoundController {
+class SoundController1_12_R2 extends SoundController {
 
     Channel channel;
     Vec3D vecCache;
     List<Channel> channelList;
     PlayerList playerList;
 
-    public SoundController1_17_R1(Player player) {
+    public SoundController1_12_R2(Player player) {
         super(player);
-        this.channel = ((CraftPlayer) player).getHandle().b.a.k;
-        this.playerList = ((CraftPlayer) player).getHandle().c.getPlayerList();
+        this.channel = ((CraftPlayer) player).getHandle().playerConnection.networkManager.channel;
+        this.playerList = ((CraftPlayer) player).getHandle().server.getPlayerList();
         player.sendMessage("Sound Controller detected");
     }
 
@@ -34,7 +29,7 @@ class SoundController1_17_R1 extends SoundController {
             Location loc = player.getLocation();
             vecCache = new Vec3D(loc.getX(), loc.getY(), loc.getZ());
         }
-        channel.write(new PacketPlayOutCustomSoundEffect(MinecraftKey.a(sound), SoundCategory.a, vecCache, volume, pitch));
+        channel.write(new PacketPlayOutCustomSoundEffect(sound, SoundCategory.MASTER, vecCache.x, vecCache.y, vecCache.z, volume, pitch));
     }
 
     @Override
@@ -43,18 +38,18 @@ class SoundController1_17_R1 extends SoundController {
             Location loc = player.getLocation();
             vecCache = new Vec3D(loc.getX(), loc.getY(), loc.getZ());
             List<Channel> channels = new ArrayList<>();
-            for (EntityPlayer entityPlayer : playerList.getPlayers()) {
-                double x = entityPlayer.locX() - vecCache.getZ();
-                double y = entityPlayer.locY() - vecCache.getX();
-                double z = entityPlayer.locZ() - vecCache.getZ();
+            for (EntityPlayer entityPlayer : playerList.players) {
+                double x = entityPlayer.locX - vecCache.x;
+                double y = entityPlayer.locY - vecCache.y;
+                double z = entityPlayer.locZ - vecCache.z;
                 if (x * x + y * y + z * z < range * range) {
-                    channels.add(entityPlayer.b.a.k);
+                    channels.add(entityPlayer.playerConnection.networkManager.channel);
                 }
             }
             this.channelList = channels;
         }
         for (Channel channel1 : channelList) {
-            channel1.write(new PacketPlayOutCustomSoundEffect(MinecraftKey.a(sound), SoundCategory.a, vecCache, volume, pitch));
+            channel1.write(new PacketPlayOutCustomSoundEffect(sound, SoundCategory.MASTER, vecCache.x, vecCache.y, vecCache.z, volume, pitch));
         }
     }
 

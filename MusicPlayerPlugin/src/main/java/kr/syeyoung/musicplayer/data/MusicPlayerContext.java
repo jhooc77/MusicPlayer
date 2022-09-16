@@ -25,6 +25,7 @@ public class MusicPlayerContext implements Runnable {
     private int range = -1;
     private boolean debug = false;
     private SinewaveRegistry sinewaveRegistry;
+    private boolean doStopSound;
 
     @Override
     public void run() { // Probably shouldn't play song here but idk
@@ -66,7 +67,7 @@ public class MusicPlayerContext implements Runnable {
 //                }
 //                lastBin = bin;
 //            }
-            if (provider.isDoStopSound()) {
+            if (doStopSound) {
                 for (String sound : sinewaveRegistry.SOUND_FREQUENCY.keySet()) {
                     player.stopSound(sound);
                 }

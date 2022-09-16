@@ -6,6 +6,4 @@ public interface FFTProvider {
     boolean prepareFrame();
 
     FFTFrame getFrame();
-
-    boolean isDoStopSound();
 }

@@ -76,6 +76,7 @@
             <artifactId>MusicPlayerAPI</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>kr.syeyoung</groupId>
             <artifactId>SoundController_1_17_R1</artifactId>

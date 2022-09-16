@@ -29,4 +29,9 @@ public class FFTFileFFTFrameProvider implements FFTProvider {
     public FFTFrame getFrame() {
         return preparedFftFrame;
     }
+
+    @Override
+    public boolean isDoStopSound() {
+        return false;
+    }
 }

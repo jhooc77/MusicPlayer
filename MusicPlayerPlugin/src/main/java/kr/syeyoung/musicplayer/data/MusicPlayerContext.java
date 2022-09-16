@@ -1,16 +1,13 @@
 package kr.syeyoung.musicplayer.data;
 
+import kr.syeyoung.musicplayer.Musicplayer;
 import kr.syeyoung.musicplayer.SinewaveRegistry;
-import lombok.AllArgsConstructor;
+import kr.syeyoung.musicplayer.sound.SoundController;
 import lombok.Data;
-import lombok.Setter;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
-import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 import org.quifft.output.FFTFrame;
 import org.quifft.output.FrequencyBin;
 
@@ -26,12 +23,15 @@ public class MusicPlayerContext implements Runnable {
 
     private FFTProvider provider;
 
+    private SoundController controller;
+
     @Override
     public void run() { // Probably shouldn't play song here but idk
         player.sendMessage("Playing... "+file.getAbsolutePath());
         double minF = 0.5;
         double maxF = 2;
         final long startTime = System.currentTimeMillis();
+        final double value = Musicplayer.getPlugin(Musicplayer.class).getConfig().getDouble("filter-percent", 0.05);
         while(true) {
             if (!provider.prepareFrame()) {
                 break;
@@ -65,12 +65,15 @@ public class MusicPlayerContext implements Runnable {
 //                }
 //                lastBin = bin;
 //            }
+            if (provider.isDoStopSound()) {
+                player.stopAllSounds();
+            }
             for (FrequencyBin bin : frame.bins) {
-                if (bin.amplitude > 0.05) {
+                if (bin.amplitude > value) {
                     String s = SinewaveRegistry.getBestSound(bin.frequency);
                     double freq = SinewaveRegistry.getFrequency(s);
                     double fl = (bin.frequency / freq);
-                    player.playSound(loc, s, SoundCategory.BLOCKS, (float) (volume * bin.amplitude), (float) fl);
+                    controller.writeSound(s, (float) (volume * bin.amplitude), (float) fl);
                     cnt++;
                     if (fl < minF) {
                         minF = fl;
@@ -79,12 +82,13 @@ public class MusicPlayerContext implements Runnable {
                     }
                 }
             }
+            controller.flushSound();
             long sleepTime = (long) (startTime + frame.frameEndMs - System.currentTimeMillis());
 
             player.sendTitle("count:" + cnt, "min:" + String.format("%.3f", minF) + " max:" + String.format("%.3f", maxF) + " time:" + sleepTime, 0, 40, 10);
 
             try {
-                Thread.sleep(sleepTime);
+                Thread.sleep(sleepTime < 0 ? 0 : sleepTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
